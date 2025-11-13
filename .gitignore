@@ -1,0 +1,65 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration
+local.properties
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio specific
+captures/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Generated files
+gen/
+out/
+
+# Keystore files (do NOT commit your signing keys)
+*.jks
+*.keystore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependency cache
+**/.gradle/
+**/build/
+**/.idea/
+**/.cxx/
+
+# Android
+*.apk
+*.ap_
+*.aab
+
+# Kotlin/Java
+*.class
+
+# Misc
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/gradle.xml
+.idea/**/libraries
+.idea/caches
+.idea/modules.xml
+
+# Backup files
+*.swp
+*.bak
+*.tmp
+*.orig
