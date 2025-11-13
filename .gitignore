@@ -63,3 +63,18 @@ out/
 *.bak
 *.tmp
 *.orig
+
+# Android memory dumps
+*.hprof
+
+# Firebase / Google services
+google-services.json
+
+# Kotlin metadata
+*.kotlin_module
+
+# Gradle TestKit
+.gradle-test-kit/
+
+# Local Gradle cache (explicit)
+/.gradle
