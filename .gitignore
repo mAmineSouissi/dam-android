@@ -38,7 +38,6 @@ out/
 
 # Dependency cache
 **/.gradle/
-**/build/
 **/.idea/
 **/.cxx/
 
