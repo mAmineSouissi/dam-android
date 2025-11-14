@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import tn.esprit.dam_android.navigation.Screen
 import tn.esprit.dam_android.ui.components.*
 import tn.esprit.dam_android.ui.theme.*
 
@@ -66,10 +67,11 @@ fun SettingsScreen(
             item {
                 SGCard {
                     Column {
-                        ToggleSettingItem(
-                            title = "Real-time Monitoring",
-                            checked = realtimeMonitoring,
-                            onCheckedChange = { realtimeMonitoring = it }
+                        NavigationSettingItem(
+                            title = "Change Password",
+                            onClick = {
+                                // TODO: Add Change Password screen
+                            }
                         )
 
                         HorizontalDivider(
@@ -77,10 +79,11 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                         )
 
-                        ToggleSettingItem(
-                            title = "Background Scanning",
-                            checked = backgroundScanning,
-                            onCheckedChange = { backgroundScanning = it }
+                        NavigationSettingItem(
+                            title = "Device Management",
+                            onClick = {
+                                navController.navigate(Screen.DeviceRegistration.route)
+                            }
                         )
 
                         HorizontalDivider(
@@ -88,10 +91,11 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                         )
 
-                        ToggleSettingItem(
-                            title = "Notifications",
-                            checked = notifications,
-                            onCheckedChange = { notifications = it }
+                        NavigationSettingItem(
+                            title = "Export My Data",
+                            onClick = {
+                                // TODO: Add Export screen
+                            }
                         )
                     }
                 }
@@ -106,7 +110,9 @@ fun SettingsScreen(
                     Column {
                         NavigationSettingItem(
                             title = "Change Password",
-                            onClick = { /* TODO: Navigate to change password */ }
+                            onClick = {
+                                navController.navigate(Screen.DeviceRegistration.route)
+                            }
                         )
 
                         HorizontalDivider(

@@ -4,7 +4,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import tn.esprit.dam_android.api.ScanService
 import tn.esprit.dam_android.models.auth.services.AuthService
+import tn.esprit.dam_android.models.device.services.DeviceService
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
@@ -30,4 +32,10 @@ object RetrofitClient {
         .build()
 
     val authApi: AuthService = retrofit.create(AuthService::class.java)
+    val deviceService: DeviceService by lazy {
+        retrofit.create(DeviceService::class.java)
+    }
+    val scanService: ScanService by lazy {
+        retrofit.create(ScanService::class.java)
+   }
 }

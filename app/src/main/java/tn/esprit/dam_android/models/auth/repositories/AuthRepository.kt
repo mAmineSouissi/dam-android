@@ -5,8 +5,12 @@ import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import tn.esprit.dam_android.api.local.RetrofitClient
+import tn.esprit.dam_android.api.local.RetrofitClient.deviceService
 import tn.esprit.dam_android.api.local.TokenManager
 import tn.esprit.dam_android.models.auth.*
+import tn.esprit.dam_android.models.device.DeviceStatusResponse
+import tn.esprit.dam_android.models.device.RegisterDeviceRequest
+import tn.esprit.dam_android.models.device.RegisterDeviceResponse
 import tn.esprit.dam_android.models.user.RegisterRequest
 
 sealed class ApiResult<out T> {
@@ -281,6 +285,90 @@ class AuthRepository(private val tokenManager: TokenManager) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Get user exception: ${e.message}", e)
+            ApiResult.Error(e.message ?: "Network error occurred")
+        }
+    }
+
+    suspend fun registerDevice(
+        platform: String,
+        osVersion: String,
+        deviceModel: String,
+        appVersion: String,
+        deviceIdentifier: String
+    ): ApiResult<RegisterDeviceResponse> {
+        return try {
+            val token = tokenManager.getTokenSync()
+            if (token?.isEmpty() ?: true) return ApiResult.Error("Not authenticated")
+
+            val response = deviceService.registerDevice(
+                authorization = "Bearer $token",
+                request = RegisterDeviceRequest(
+                    platform = platform,
+                    osVersion = osVersion,
+                    deviceModel = deviceModel,
+                    appVersion = appVersion,
+                    deviceIdentifier = deviceIdentifier
+                )
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                ApiResult.Success(response.body()!!)
+            } else {
+                ApiResult.Error("Registration failed: ${response.message()}", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+
+    /**
+     * Get device registration status
+     * GET /api/devices/status
+     */
+    suspend fun getDeviceStatus(): ApiResult<DeviceStatusResponse> {
+        return try {
+            var token = tokenManager.getTokenSync()
+            if (token?.isEmpty() ?: true) return ApiResult.Error("Not authenticated")
+
+            Log.d(TAG, "Fetching device status")
+            var response = deviceService.getDeviceStatus("Bearer $token")
+
+            // If 401, try to refresh token and retry
+            if (response.code() == 401) {
+                Log.d(TAG, "Token expired, attempting refresh")
+                val refreshResult = refreshToken()
+                if (refreshResult is ApiResult.Success) {
+                    // Retry with new token
+                    token = tokenManager.getTokenSync()
+                    if (!token.isNullOrEmpty()) {
+                        Log.d(TAG, "Token refreshed, retrying device status")
+                        response = deviceService.getDeviceStatus("Bearer $token")
+                    } else {
+                        return ApiResult.Error("Token refresh failed", 401)
+                    }
+                } else {
+                    Log.e(TAG, "Token refresh failed, returning 401")
+                    return ApiResult.Error("Unauthorized - please login again", 401)
+                }
+            }
+
+            if (response.isSuccessful && response.body() != null) {
+                val status = response.body()!!
+                Log.d(TAG, "Device status: isRegistered=${status.isDeviceRegistered}, count=${status.deviceCount}")
+                ApiResult.Success(status)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = try {
+                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "Failed to fetch device status"
+                }
+                Log.e(TAG, "Get device status failed: $errorMessage (code: ${response.code()})")
+                ApiResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Get device status exception: ${e.message}", e)
             ApiResult.Error(e.message ?: "Network error occurred")
         }
     }
