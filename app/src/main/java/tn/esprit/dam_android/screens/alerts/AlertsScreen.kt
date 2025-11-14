@@ -251,16 +251,3 @@ fun AlertsScreenLightPreview() {
         AlertsScreen(navController = navController)
     }
 }
-
-@Preview(
-    name = "Alerts - Dark",
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun AlertsScreenDarkPreview() {
-    ShadowGuardTheme {
-        val navController = rememberNavController()
-        AlertsScreen(navController = navController)
-    }
-}
