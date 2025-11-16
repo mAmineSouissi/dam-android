@@ -20,7 +20,6 @@ interface AuthService {
         @Body request: LoginRequest
     ): Response<LoginResponse>
 
-    // Get Current User - GET /api/users/profile
     @GET("/api/users/profile")
     suspend fun getCurrentUser(
         @Header("Authorization") token: String

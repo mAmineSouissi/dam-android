@@ -12,6 +12,7 @@ import tn.esprit.dam_android.models.device.DeviceStatusResponse
 import tn.esprit.dam_android.models.device.RegisterDeviceRequest
 import tn.esprit.dam_android.models.device.RegisterDeviceResponse
 import tn.esprit.dam_android.models.user.RegisterRequest
+import tn.esprit.dam_android.models.user.UpdateProfileRequest
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -22,6 +23,7 @@ sealed class ApiResult<out T> {
 class AuthRepository(private val tokenManager: TokenManager) {
 
     private val authApi = RetrofitClient.authApi
+    private val userService = RetrofitClient.userService
     private val TAG = "AuthRepository"
 
     /**
@@ -369,6 +371,163 @@ class AuthRepository(private val tokenManager: TokenManager) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Get device status exception: ${e.message}", e)
+            ApiResult.Error(e.message ?: "Network error occurred")
+        }
+    }
+
+  
+    suspend fun getUserProfile(): ApiResult<tn.esprit.dam_android.models.user.User> {
+        return try {
+            val token = tokenManager.getTokenSync()
+            if (token.isNullOrEmpty()) {
+                return ApiResult.Error("No access token available")
+            }
+
+            Log.d(TAG, "Fetching user profile from /api/users/me")
+            val response = userService.getCurrentUser("Bearer $token")
+
+            if (response.isSuccessful && response.body() != null) {
+                val user = response.body()!!
+                Log.d(TAG, "User profile fetched: ${user.email}")
+                ApiResult.Success(user)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = try {
+                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "Failed to fetch user profile"
+                }
+                Log.e(TAG, "Get user profile failed: $errorMessage")
+                ApiResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Get user profile exception: ${e.message}", e)
+            ApiResult.Error(e.message ?: "Network error occurred")
+        }
+    }
+
+    /**
+     * Update user profile
+     * PATCH /api/users/profile/{id}
+     */
+    suspend fun updateProfile(
+        userId: String,
+        name: String? = null,
+        surname: String? = null,
+        phone: String? = null
+    ): ApiResult<tn.esprit.dam_android.models.user.User> {
+        return try {
+            val token = tokenManager.getTokenSync()
+            if (token.isNullOrEmpty()) {
+                return ApiResult.Error("No access token available")
+            }
+
+            Log.d(TAG, "Updating user profile for user: $userId")
+            val request = UpdateProfileRequest(
+                name = name,
+                surname = surname,
+                phone = phone
+            )
+            val response = userService.updateProfile(
+                userId = userId,
+                authorization = "Bearer $token",
+                request = request
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                val user = response.body()!!
+                Log.d(TAG, "User profile updated successfully: ${user.email}")
+                ApiResult.Success(user)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = try {
+                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "Failed to update user profile"
+                }
+                Log.e(TAG, "Update profile failed: $errorMessage")
+                ApiResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Update profile exception: ${e.message}", e)
+            ApiResult.Error(e.message ?: "Network error occurred")
+        }
+    }
+
+    /**
+     * Get device by deviceIdentifier
+     * GET /api/devices/identifier/:deviceIdentifier
+     */
+    suspend fun getDeviceByIdentifier(deviceIdentifier: String): ApiResult<tn.esprit.dam_android.models.device.DeviceInfo> {
+        return try {
+            val token = tokenManager.getTokenSync()
+            if (token.isNullOrEmpty()) {
+                return ApiResult.Error("No access token available")
+            }
+
+            Log.d(TAG, "Fetching device by identifier: $deviceIdentifier")
+            val response = deviceService.getDeviceByIdentifier(
+                deviceIdentifier = deviceIdentifier,
+                authorization = "Bearer $token"
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                val device = response.body()!!
+                Log.d(TAG, "Device fetched: ${device.platform} - ${device.deviceModel}")
+                ApiResult.Success(device)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = try {
+                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "Failed to fetch device"
+                }
+                Log.e(TAG, "Get device by identifier failed: $errorMessage")
+                ApiResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Get device by identifier exception: ${e.message}", e)
+            ApiResult.Error(e.message ?: "Network error occurred")
+        }
+    }
+    
+    suspend fun checkDeviceRegistration(
+        deviceIdentifier: String,
+        platform: String = "android"
+    ): ApiResult<tn.esprit.dam_android.models.device.DeviceCheckResponse> {
+        return try {
+            val token = tokenManager.getTokenSync()
+            if (token.isNullOrEmpty()) {
+                return ApiResult.Error("No access token available")
+            }
+
+            Log.d(TAG, "Checking device registration: $deviceIdentifier (platform: $platform)")
+            val response = deviceService.checkDeviceRegistration(
+                deviceIdentifier = deviceIdentifier,
+                platform = platform,
+                authorization = "Bearer $token"
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                val checkResponse = response.body()!!
+                Log.d(TAG, "Device check result: isRegistered=${checkResponse.isRegistered}")
+                ApiResult.Success(checkResponse)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = try {
+                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e: Exception) {
+                    "Failed to check device registration"
+                }
+                Log.e(TAG, "Check device registration failed: $errorMessage")
+                ApiResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Check device registration exception: ${e.message}", e)
             ApiResult.Error(e.message ?: "Network error occurred")
         }
     }

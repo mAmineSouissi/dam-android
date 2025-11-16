@@ -7,6 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import tn.esprit.dam_android.api.ScanService
 import tn.esprit.dam_android.models.auth.services.AuthService
 import tn.esprit.dam_android.models.device.services.DeviceService
+import tn.esprit.dam_android.models.user.services.UserService
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
@@ -37,5 +38,8 @@ object RetrofitClient {
     }
     val scanService: ScanService by lazy {
         retrofit.create(ScanService::class.java)
-   }
+    }
+    val userService: UserService by lazy {
+        retrofit.create(UserService::class.java)
+    }
 }

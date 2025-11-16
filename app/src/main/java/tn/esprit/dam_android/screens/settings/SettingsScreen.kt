@@ -40,10 +40,6 @@ fun SettingsScreen(
                 },
                 actions = {
                     TextButton(onClick = { /* TODO: Navigate */ }) {
-                        Text(
-                            text = "Settings",
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -61,12 +57,22 @@ fun SettingsScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(Spacing.sm))
-                SectionHeader(title = "MONITORING")
+                SectionHeader(title = "ACCOUNT")
             }
 
             item {
                 SGCard {
                     Column {
+                        NavigationSettingItem(
+                            title = "Profile",
+                            onClick = {
+                                navController.navigate(Screen.UpdateProfile.route)
+                            }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = Spacing.xs),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
                         NavigationSettingItem(
                             title = "Change Password",
                             onClick = {
@@ -96,43 +102,6 @@ fun SettingsScreen(
                             onClick = {
                                 // TODO: Add Export screen
                             }
-                        )
-                    }
-                }
-            }
-
-            item {
-                SectionHeader(title = "ACCOUNT")
-            }
-
-            item {
-                SGCard {
-                    Column {
-                        NavigationSettingItem(
-                            title = "Change Password",
-                            onClick = {
-                                navController.navigate(Screen.DeviceRegistration.route)
-                            }
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = Spacing.xs),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-
-                        NavigationSettingItem(
-                            title = "Device Management",
-                            onClick = { /* TODO: Navigate to device management */ }
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = Spacing.xs),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-
-                        NavigationSettingItem(
-                            title = "Export My Data",
-                            onClick = { /* TODO: Navigate to export data */ }
                         )
                     }
                 }

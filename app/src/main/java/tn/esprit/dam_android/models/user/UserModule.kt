@@ -22,8 +22,14 @@ data class User(
     @SerializedName("phone")
     val phone: String? = null,
 
+    @SerializedName("avatar")
+    val avatar: String? = null,
+
     @SerializedName("role")
-    val role: String? = null
+    val role: String? = null,
+
+    @SerializedName("isDeviceRegistered")
+    val isDeviceRegistered: Boolean? = null,
 ) {
     val uid: String
         get() = _id ?: id.orEmpty()
@@ -44,4 +50,15 @@ data class RegisterRequest(
 
     @SerializedName("phone")
     val phone: String
+)
+
+data class UpdateProfileRequest(
+    @SerializedName("name")
+    val name: String? = null,
+
+    @SerializedName("surname")
+    val surname: String? = null,
+
+    @SerializedName("phone")
+    val phone: String? = null
 )
