@@ -23,6 +23,7 @@ fun SGTextField(
     errorMessage: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     isPassword: Boolean = false,
+    enabled: Boolean = true,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null
 ) {
@@ -31,6 +32,7 @@ fun SGTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
             label = if (label != null) {
                 { Text(label) }
             } else null,
