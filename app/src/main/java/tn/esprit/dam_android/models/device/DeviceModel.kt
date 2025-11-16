@@ -32,3 +32,8 @@ data class DeviceStatusResponse(
     val deviceCount: Int,
     val devices: List<DeviceInfo>
 )
+
+data class DeviceCheckResponse(
+    val isRegistered: Boolean,
+    val device: DeviceInfo? = null
+)

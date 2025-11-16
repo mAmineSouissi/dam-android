@@ -24,6 +24,7 @@ import tn.esprit.dam_android.screens.login.OtpScreen
 import tn.esprit.dam_android.screens.login.ResetPasswordScreen
 import tn.esprit.dam_android.screens.settings.DeviceRegistrationScreen
 import tn.esprit.dam_android.screens.settings.SettingsScreen
+import tn.esprit.dam_android.screens.profile.UpdateProfileScreen
 
 @Composable
 fun SetupNavGraph(
@@ -41,54 +42,63 @@ fun SetupNavGraph(
         if (token.isNullOrEmpty()) {
             startDestination = Screen.Login.route
         } else {
-            // First check local SharedPrefs for quick fallback
-            val localDeviceId = tn.esprit.dam_android.utils.SharedPrefs.getDeviceId(context)
+            // Get device identifier (Android ID)
+            val deviceIdentifier = android.provider.Settings.Secure.getString(
+                context.contentResolver,
+                android.provider.Settings.Secure.ANDROID_ID
+            ) ?: ""
             
-            // Check device registration status from backend
-            val statusResult = authRepository.getDeviceStatus()
-            startDestination = when (statusResult) {
-                is tn.esprit.dam_android.models.auth.repositories.ApiResult.Success -> {
-                    val status = statusResult.data
-                    // If we have devices in the list, use the first one (even if isDeviceRegistered is false)
-                    // This handles backend inconsistencies where devices exist but flag is false
-                    if (status.devices.isNotEmpty()) {
-                        val deviceId = status.devices.first()._id
-                        tn.esprit.dam_android.utils.SharedPrefs.saveDeviceId(context, deviceId)
-                        Screen.Home.route
-                    } else if (status.isDeviceRegistered) {
-                        // If flag is true but no devices (shouldn't happen, but handle it)
-                        Screen.DeviceRegistration.route
-                    } else {
-                        // No devices and not registered - check local fallback
-                        if (!localDeviceId.isNullOrEmpty()) {
+            // First check local SharedPrefs for quick fallback
+            val localDeviceIdentifier = tn.esprit.dam_android.utils.SharedPrefs.getDeviceIdentifier(context)
+            
+            // Use check endpoint for efficient device registration verification
+            if (deviceIdentifier.isNotEmpty()) {
+                val checkResult = authRepository.checkDeviceRegistration(
+                    deviceIdentifier = deviceIdentifier,
+                    platform = "android"
+                )
+                startDestination = when (checkResult) {
+                    is tn.esprit.dam_android.models.auth.repositories.ApiResult.Success -> {
+                        val checkResponse = checkResult.data
+                        if (checkResponse.isRegistered && checkResponse.device != null) {
+                            // Device is registered - save identifier and go to home
+                            val returnedDeviceIdentifier = checkResponse.device.deviceIdentifier ?: deviceIdentifier
+                            tn.esprit.dam_android.utils.SharedPrefs.saveDeviceIdentifier(context, returnedDeviceIdentifier)
+                            Screen.Home.route
+                        } else {
+                            // Device not registered - go to registration screen
+                            Screen.DeviceRegistration.route
+                        }
+                    }
+                    is tn.esprit.dam_android.models.auth.repositories.ApiResult.Error -> {
+                        // If 401 (Unauthorized), token is invalid - redirect to login
+                        if (checkResult.code == 401) {
+                            authRepository.logout()
+                            Screen.Login.route
+                        } else {
+                            // Other errors - use local check as fallback
+                            if (!localDeviceIdentifier.isNullOrEmpty()) {
+                                Screen.Home.route
+                            } else {
+                                Screen.DeviceRegistration.route
+                            }
+                        }
+                    }
+                    else -> {
+                        // API failed - use local check as fallback
+                        if (!localDeviceIdentifier.isNullOrEmpty()) {
                             Screen.Home.route
                         } else {
                             Screen.DeviceRegistration.route
                         }
                     }
                 }
-                is tn.esprit.dam_android.models.auth.repositories.ApiResult.Error -> {
-                    // If 401 (Unauthorized), token is invalid - redirect to login
-                    if (statusResult.code == 401) {
-                        // Clear invalid token
-                        authRepository.logout()
-                        Screen.Login.route
-                    } else {
-                        // Other errors - use local check as fallback
-                        if (!localDeviceId.isNullOrEmpty()) {
-                            Screen.Home.route
-                        } else {
-                            Screen.DeviceRegistration.route
-                        }
-                    }
-                }
-                else -> {
-                    // API failed - use local check as fallback
-                    if (!localDeviceId.isNullOrEmpty()) {
-                        Screen.Home.route
-                    } else {
-                        Screen.DeviceRegistration.route
-                    }
+            } else {
+                // No device identifier - use local check as fallback
+                if (!localDeviceIdentifier.isNullOrEmpty()) {
+                    startDestination = Screen.Home.route
+                } else {
+                    startDestination = Screen.DeviceRegistration.route
                 }
             }
         }
@@ -107,51 +117,11 @@ fun SetupNavGraph(
     ) {
         // AUTH FLOW
         composable(Screen.Login.route) {
-            val scope = rememberCoroutineScope()
             LoginScreen(
                 onLoginSuccess = {
-                    scope.launch {
-                        // Check device status after login
-                        val statusResult = authRepository.getDeviceStatus()
-                        val destination = when (statusResult) {
-                            is tn.esprit.dam_android.models.auth.repositories.ApiResult.Success -> {
-                                val status = statusResult.data
-                                // If we have devices, use them (even if isDeviceRegistered is false)
-                                if (status.devices.isNotEmpty()) {
-                                    val deviceId = status.devices.first()._id
-                                    tn.esprit.dam_android.utils.SharedPrefs.saveDeviceId(context, deviceId)
-                                    Screen.Home.route
-                                } else {
-                                    Screen.DeviceRegistration.route
-                                }
-                            }
-                            is tn.esprit.dam_android.models.auth.repositories.ApiResult.Error -> {
-                                // If still 401 after login, something is wrong - go to registration
-                                if (statusResult.code == 401) {
-                                    Screen.DeviceRegistration.route
-                                } else {
-                                    // Other errors - fallback to local check
-                                    val deviceId = tn.esprit.dam_android.utils.SharedPrefs.getDeviceId(context)
-                                    if (deviceId.isNullOrEmpty()) {
-                                        Screen.DeviceRegistration.route
-                                    } else {
-                                        Screen.Home.route
-                                    }
-                                }
-                            }
-                            else -> {
-                                // Fallback to local check
-                                val deviceId = tn.esprit.dam_android.utils.SharedPrefs.getDeviceId(context)
-                                if (deviceId.isNullOrEmpty()) {
-                                    Screen.DeviceRegistration.route
-                                } else {
-                                    Screen.Home.route
-                                }
-                            }
-                        }
-                        navController.navigate(destination) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
-                        }
+                    // Always navigate to Home after successful login
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
@@ -250,11 +220,20 @@ fun SetupNavGraph(
                 onLogout = {
                     scope.launch {
                         authRepository.logout()
-                        tn.esprit.dam_android.utils.SharedPrefs.saveDeviceId(context, "") // Clear device ID
+                        tn.esprit.dam_android.utils.SharedPrefs.clearDeviceInfo(context) // Clear all device info
                     }
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(Screen.UpdateProfile.route) {
+            UpdateProfileScreen(
+                onBack = { navController.popBackStack() },
+                onUpdateSuccess = {
+                    // Profile updated successfully, already navigated back
                 }
             )
         }

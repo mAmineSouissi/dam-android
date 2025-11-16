@@ -108,9 +108,10 @@ fun AppScreen() {
                             // Upload scan
                             val token = tokenManager.getTokenSync() ?: ""
                             if (token.isNotEmpty()) {
-                                // Get registered device ID (must be from SharedPrefs, not fallback)
-                                val registeredDeviceId = SharedPrefs.getDeviceId(context)
-                                if (registeredDeviceId == null || registeredDeviceId.isEmpty()) {
+                                // Use deviceIdentifier for scan endpoint (primary identifier)
+                                val deviceIdentifier = SharedPrefs.getDeviceIdentifier(context)
+                                
+                                if (deviceIdentifier == null || deviceIdentifier.isEmpty()) {
                                     snackbarHostState.showSnackbar("Device not registered. Please register first.")
                                     isScanning = false
                                     return@launch
@@ -118,7 +119,7 @@ fun AppScreen() {
                                 
                                 try {
                                     val response = RetrofitClient.scanService.uploadScan(
-                                        deviceId = registeredDeviceId,
+                                        deviceId = deviceIdentifier,
                                         authorization = "Bearer $token",
                                         request = tn.esprit.dam_android.models.scan.ScanRequest(apps = appInfoList)
                                     )
@@ -275,9 +276,10 @@ fun AppScreen() {
                             // Upload scan
                             val token = tokenManager.getTokenSync() ?: ""
                             if (token.isNotEmpty()) {
-                                // Get registered device ID (must be from SharedPrefs, not fallback)
-                                val registeredDeviceId = SharedPrefs.getDeviceId(context)
-                                if (registeredDeviceId == null || registeredDeviceId.isEmpty()) {
+                                // Use deviceIdentifier for scan endpoint (primary identifier)
+                                val deviceIdentifier = SharedPrefs.getDeviceIdentifier(context)
+                                
+                                if (deviceIdentifier == null || deviceIdentifier.isEmpty()) {
                                     snackbarHostState.showSnackbar("Device not registered. Please register first.")
                                     isScanning = false
                                     return@launch
@@ -285,7 +287,7 @@ fun AppScreen() {
                                 
                                 try {
                                     val response = RetrofitClient.scanService.uploadScan(
-                                        deviceId = registeredDeviceId,
+                                        deviceId = deviceIdentifier,
                                         authorization = "Bearer $token",
                                         request = tn.esprit.dam_android.models.scan.ScanRequest(apps = appInfoList)
                                     )

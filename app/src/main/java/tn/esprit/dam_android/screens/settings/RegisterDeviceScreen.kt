@@ -61,39 +61,50 @@ fun DeviceRegistrationScreen(
     val tokenManager = remember { TokenManager(context) }
     val authRepository = remember { AuthRepository(tokenManager) }
 
-    // Check device status on screen load
+    // Get device identifier (Android ID)
+    val deviceIdentifier = remember {
+        Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ANDROID_ID
+        ) ?: "unknown"
+    }
+
+    // Check device registration on screen load
     LaunchedEffect(Unit) {
         val token = tokenManager.getTokenSync()
-        if (!token.isNullOrEmpty()) {
-            val statusResult = authRepository.getDeviceStatus()
-            when (statusResult) {
+        if (!token.isNullOrEmpty() && deviceIdentifier != "unknown") {
+            // Use the check endpoint to verify device registration
+            val checkResult = authRepository.checkDeviceRegistration(
+                deviceIdentifier = deviceIdentifier,
+                platform = "android"
+            )
+            when (checkResult) {
                 is ApiResult.Success -> {
-                    val status = statusResult.data
-                    isDeviceRegistered = status.devices.isNotEmpty() || status.isDeviceRegistered
-                    if (status.devices.isNotEmpty()) {
-                        registeredDeviceId = status.devices.first()._id
-                        // Also check local SharedPrefs
-                        val localDeviceId = SharedPrefs.getDeviceId(context)
-                        if (localDeviceId.isNullOrEmpty() && registeredDeviceId != null) {
-                            SharedPrefs.saveDeviceId(context, registeredDeviceId!!)
-                        }
+                    val checkResponse = checkResult.data
+                    isDeviceRegistered = checkResponse.isRegistered
+                    if (checkResponse.isRegistered && checkResponse.device != null) {
+                        val device = checkResponse.device
+                        registeredDeviceId = device._id
+                        // Save deviceIdentifier (primary identifier)
+                        val returnedDeviceIdentifier = device.deviceIdentifier ?: deviceIdentifier
+                        SharedPrefs.saveDeviceIdentifier(context, returnedDeviceIdentifier)
                     }
                 }
                 else -> {
                     // Check local SharedPrefs as fallback
-                    val localDeviceId = SharedPrefs.getDeviceId(context)
-                    if (!localDeviceId.isNullOrEmpty()) {
+                    val localDeviceIdentifier = SharedPrefs.getDeviceIdentifier(context)
+                    if (!localDeviceIdentifier.isNullOrEmpty()) {
                         isDeviceRegistered = true
-                        registeredDeviceId = localDeviceId
+                        // Note: registeredDeviceId is for display only, we use deviceIdentifier for operations
                     }
                 }
             }
         } else {
             // Check local SharedPrefs if no token
-            val localDeviceId = SharedPrefs.getDeviceId(context)
-            if (!localDeviceId.isNullOrEmpty()) {
+            val localDeviceIdentifier = SharedPrefs.getDeviceIdentifier(context)
+            if (!localDeviceIdentifier.isNullOrEmpty()) {
                 isDeviceRegistered = true
-                registeredDeviceId = localDeviceId
+                // Note: registeredDeviceId is for display only, we use deviceIdentifier for operations
             }
         }
         isCheckingStatus = false
@@ -293,15 +304,16 @@ fun DeviceRegistrationScreen(
 
                             if (response.isSuccessful && response.body() != null) {
                                 val result = response.body()!!
-                                val deviceId = result.device._id
-                                val isRegistered = result.isRegistered ?: true
+                                val returnedDeviceIdentifier = result.device.deviceIdentifier ?: deviceIdentifier
+                                val isRegistered = result.isRegistered ?: false
                                 
-                                SharedPrefs.saveDeviceId(context, deviceId)
+                                // Save deviceIdentifier only (primary identifier for all operations)
+                                SharedPrefs.saveDeviceIdentifier(context, returnedDeviceIdentifier)
                                 
                                 val message = if (isRegistered) {
-                                    "Device registered successfully: $deviceId"
+                                    "Device already registered"
                                 } else {
-                                    result.message ?: "Device registration completed"
+                                    "Device registered successfully"
                                 }
                                 
                                 snackbarHostState.showSnackbar(message)
