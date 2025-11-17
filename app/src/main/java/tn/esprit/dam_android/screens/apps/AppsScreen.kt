@@ -2,8 +2,6 @@ package tn.esprit.dam_android.screens.apps
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,10 +20,7 @@ import kotlinx.coroutines.launch
 import tn.esprit.dam_android.api.local.RetrofitClient
 import tn.esprit.dam_android.api.local.TokenManager
 import tn.esprit.dam_android.models.scan.AppInfo
-import tn.esprit.dam_android.models.scan.ScanResponse
-import tn.esprit.dam_android.ui.components.SGButton
 import tn.esprit.dam_android.ui.components.SGCard
-import tn.esprit.dam_android.ui.theme.ShadowGuardTheme
 import tn.esprit.dam_android.ui.theme.Spacing
 import tn.esprit.dam_android.utils.SharedPrefs
 import java.util.*

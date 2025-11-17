@@ -11,9 +11,7 @@ import tn.esprit.dam_android.models.user.services.UserService
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:5001/" // For Android Emulator
-    // For physical device, use: "http://YOUR_IP:3000/"
-    // For production, use: "https://api.shadowguard.com/"
+    private const val BASE_URL = "http://10.0.2.2:5001/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
