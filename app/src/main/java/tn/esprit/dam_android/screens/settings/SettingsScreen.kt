@@ -1,5 +1,6 @@
 package tn.esprit.dam_android.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -10,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import tn.esprit.dam_android.navigation.Screen
@@ -116,7 +116,9 @@ fun SettingsScreen(
                     Column {
                         NavigationSettingItem(
                             title = "Privacy Policy",
-                            onClick = { /* TODO: Navigate to privacy policy */ }
+                            onClick = {
+                                navController.navigate(Screen.PrivacyPolicy.route)
+                            }
                         )
 
                         HorizontalDivider(
@@ -126,7 +128,9 @@ fun SettingsScreen(
 
                         NavigationSettingItem(
                             title = "Terms of Service",
-                            onClick = { /* TODO: Navigate to terms */ }
+                            onClick = {
+                                navController.navigate(Screen.TermsOfService.route)
+                            }
                         )
 
                         HorizontalDivider(
@@ -207,6 +211,7 @@ private fun NavigationSettingItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = Spacing.md),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -217,16 +222,12 @@ private fun NavigationSettingItem(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        IconButton(
-            onClick = onClick,
-            modifier = Modifier.size(24.dp)
-        ) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Navigate",
                 tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
             )
-        }
+
     }
 }
 

@@ -1,4 +1,3 @@
-// SetupNavGraph.kt
 package tn.esprit.dam_android.navigation
 
 import androidx.compose.foundation.layout.Box
@@ -24,6 +23,8 @@ import tn.esprit.dam_android.screens.login.OtpScreen
 import tn.esprit.dam_android.screens.login.ResetPasswordScreen
 import tn.esprit.dam_android.screens.settings.DeviceRegistrationScreen
 import tn.esprit.dam_android.screens.settings.SettingsScreen
+import tn.esprit.dam_android.screens.settings.PrivacyPolicyScreen
+import tn.esprit.dam_android.screens.settings.TermsScreen
 import tn.esprit.dam_android.screens.profile.UpdateProfileScreen
 
 @Composable
@@ -47,8 +48,7 @@ fun SetupNavGraph(
                 context.contentResolver,
                 android.provider.Settings.Secure.ANDROID_ID
             ) ?: ""
-            
-            // First check local SharedPrefs for quick fallback
+
             val localDeviceIdentifier = tn.esprit.dam_android.utils.SharedPrefs.getDeviceIdentifier(context)
             
             // Use check endpoint for efficient device registration verification
@@ -76,7 +76,6 @@ fun SetupNavGraph(
                             authRepository.logout()
                             Screen.Login.route
                         } else {
-                            // Other errors - use local check as fallback
                             if (!localDeviceIdentifier.isNullOrEmpty()) {
                                 Screen.Home.route
                             } else {
@@ -85,7 +84,7 @@ fun SetupNavGraph(
                         }
                     }
                     else -> {
-                        // API failed - use local check as fallback
+
                         if (!localDeviceIdentifier.isNullOrEmpty()) {
                             Screen.Home.route
                         } else {
@@ -94,7 +93,6 @@ fun SetupNavGraph(
                     }
                 }
             } else {
-                // No device identifier - use local check as fallback
                 if (!localDeviceIdentifier.isNullOrEmpty()) {
                     startDestination = Screen.Home.route
                 } else {
@@ -235,6 +233,18 @@ fun SetupNavGraph(
                 onUpdateSuccess = {
                     // Profile updated successfully, already navigated back
                 }
+            )
+        }
+
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.TermsOfService.route) {
+            TermsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

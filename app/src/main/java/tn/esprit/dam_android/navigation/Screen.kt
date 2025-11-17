@@ -16,6 +16,8 @@ sealed class Screen(val route: String) {
     object Alerts : Screen("alerts")
     object Settings : Screen("settings")
     object UpdateProfile : Screen("update_profile")
+    object PrivacyPolicy : Screen("privacy_policy")
+    object TermsOfService : Screen("terms_of_service")
 }
 
 val screensWithBottomNav = listOf(
